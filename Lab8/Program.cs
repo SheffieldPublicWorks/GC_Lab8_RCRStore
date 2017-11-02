@@ -21,23 +21,25 @@ namespace Lab8
             menu.Add("Fatal Steps", 37.50);
             menu.Add("Killer Whales", 19.95);
             menu.Add("Deadly Elbows", 39.95);
-            menu.Add("Torn Ligaments: The Art of Dismemberment", 79.95);
+            menu.Add("Torn Ligaments: The Art Of Dismemberment", 79.95);
             menu.Add("Snake Hips", 9.50);
             menu.Add("How To Win Friends And Influence People", 24.95);
 
-            ArrayList cartBook = new ArrayList();
-            ArrayList cartPrice = new ArrayList();
+            ArrayList cartBooks = new ArrayList();
+            ArrayList cartPrices = new ArrayList();
 
-            Console.WriteLine("{0, -5}{1, -45}{2, 10}","SKU", "Book", "Price");
-            Console.WriteLine("==========================================================================================");
-            foreach(KeyValuePair<string, double> book in menu)
+            Console.WriteLine("{0, -5}{1, -45}{2, 10:C}", "SKU#", "Book", "Price");
+            Console.WriteLine(new string('=', 60));
+            int i = 0;
+            foreach (KeyValuePair<string, double> book in menu)
             {
-                Console.WriteLine($"{book.Key, -50}{book.Value, 10:C}");
+                i++;
+                Console.WriteLine($"{i + ":",-5}{book.Key,-50}{book.Value,10:C}");
             }
 
-            Shop(menu, cartBook, cartPrice);
+            Shop(menu, cartBooks, cartPrices, i);
 
-            Checkout(cartBook, cartPrice);
+            Checkout(cartBooks, cartPrices);
 
             Console.ReadLine();
         }
@@ -46,48 +48,63 @@ namespace Lab8
         {
             int items = 0;
             double totalPrice = GetTotal(cartBook, cartPrice, ref items);
+
             Console.WriteLine("\nYour cart:");
-            Console.WriteLine("==================================================");
-            for(int i = 0; i < cartPrice.Count; i++)
+            Console.WriteLine(new string('=', 60));
+            for (int i = 0; i < cartPrice.Count; i++)
             {
-                Console.WriteLine($"{cartBook[i],-40}{cartPrice[i],10:C}");
+                Console.WriteLine($"{cartBook[i],-50}{cartPrice[i],10:C}");
             }
-            Console.WriteLine("==================================================");
-            Console.WriteLine($"{"Your total:", -50}{totalPrice, 10:C}");
-            Console.WriteLine($"\nYour average item cost was: {totalPrice/items, 10:C}");
+            Console.WriteLine(new string('=', 60));
+            Console.WriteLine($"{"Your total:",-50}{totalPrice,10:C}");
+            double averagePrice = GetAverage(totalPrice, items);
+            int lowIndex = GetLowestIndex(cartPrice);
+            int highIndex = GetHighestIndex(cartPrice);
+            Console.WriteLine($"\nYour average item cost was {averagePrice,0:C}");
+            Console.WriteLine($"The most expensive item in your cart is \"{cartBook[highIndex]}\" which costs {cartPrice[highIndex],0:C}.");
+            Console.WriteLine($"The cheapest item in your cart is \"{cartBook[lowIndex]}\" which costs {cartPrice[lowIndex],0:C}.");
         }
 
-        public static void Shop(Dictionary<string, double> menu, ArrayList cartBook, ArrayList cartPrice)
+        private static void Shop(Dictionary<string, double> menu, ArrayList cartBook, ArrayList cartPrice, int numberOfOptions)
         {
             bool keepShopping = true;
-            while(keepShopping)
+            while (keepShopping)
             {
-                GetBook("Please select a book from the list: ", menu, cartBook, cartPrice);
-                keepShopping = DoAgain("Would you like to keep shopping? (y/n): ");
+                GetBook("\nPlease select a book from the list: ", menu, cartBook, cartPrice, numberOfOptions);
+                keepShopping = DoAgain("\nWould you like to keep shopping? (y/n): ");
             }
         }
 
-        private static void GetBook(string prompt, Dictionary<string, double> menu, ArrayList cartBook, ArrayList cartPrice)
+        private static void GetBook(string prompt, Dictionary<string, double> menu, ArrayList cartBook, ArrayList cartPrice, int numberOfOptions)
         {
-            Console.WriteLine(prompt);
 
-            bool validbook = false;
-            while (!validbook)
+            bool isValid = false;
+            int number = 0;
+            while (!isValid)
             {
+                Console.Write(prompt);
                 string input = Console.ReadLine();
-
-                if (menu.ContainsKey(input))
+                isValid = int.TryParse(input, out number);
+                if (number < 1 || number > numberOfOptions)
                 {
-                    Console.WriteLine($"You chose {input} which costs {menu[input], 0:C}.");
-                    validbook = true;
-                    cartBook.Add(input);
-                    double price = menu[input];
-                    cartPrice.Add(price);
+                    Console.Write("Invalid input. ");
+                    isValid = false;
                 }
-                else
+            }
+            int i = 0;
+            foreach (KeyValuePair<string, double> book in menu)
+            {
+                i++;
+                if (i == number)
                 {
-                    Console.WriteLine("Invalid input. Please enter the book title exactly as displayed.");
-                    validbook = false;
+                    string result = book.ToString();
+                    string noBrackets = result.Substring(1, result.Length - 2);
+                    string thisBook = noBrackets.Substring(0, noBrackets.IndexOf(','));
+                    string price = noBrackets.Substring(noBrackets.IndexOf(',') + 1);
+                    double thisPrice = double.Parse(price);
+                    cartBook.Add(thisBook);
+                    cartPrice.Add(thisPrice);
+                    Console.WriteLine($"\nYou chose \"{thisBook}\" which costs {thisPrice,0:C}.");
                 }
             }
         }
@@ -104,15 +121,50 @@ namespace Lab8
             return totalPrice;
         }
 
+        private static double GetAverage(double price, int items)
+        {
+            return price / items;
+        }
+
+        private static int GetLowestIndex(ArrayList cartPrices)
+        {
+            int indexer = 0;
+            double lowest = 100.0;
+            for (int i = 0; i < cartPrices.Count; i++)
+            {
+                if ((double)cartPrices[i] < lowest)
+                {
+                    lowest = (double)cartPrices[i];
+                    indexer = i;
+                }
+            }
+            return indexer;
+        }
+
+        private static int GetHighestIndex(ArrayList cartPrices)
+        {
+            int indexer = 0;
+            double highest = 0.0;
+            for (int i = 0; i < cartPrices.Count; i++)
+            {
+                if ((double)cartPrices[i] > highest)
+                {
+                    highest = (double)cartPrices[i];
+                    indexer = i;
+                }
+            }
+            return indexer;
+        }
+
         private static bool DoAgain(string prompt)
         {
-            Console.WriteLine(prompt);
+            Console.Write(prompt);
             string input = Console.ReadLine();
             if (input == "y" || input == "yes")
             {
                 return true;
             }
-            else if(input == "n" || input == "no")
+            else if (input == "n" || input == "no")
             {
                 return false;
             }
